@@ -4,9 +4,7 @@
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
-        <option value="$PROJECT_DIR$/bricomerlin-client/pom.xml" />
-        <option value="$PROJECT_DIR$/bricomerlin-common/pom.xml" />
-        <option value="$PROJECT_DIR$/bricomerlin-server/pom.xml" />
+        <option value="$PROJECT_DIR$/pom.xml" />
       </list>
     </option>
   </component>
