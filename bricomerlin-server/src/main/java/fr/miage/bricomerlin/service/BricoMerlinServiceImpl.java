@@ -47,25 +47,42 @@ public class BricoMerlinServiceImpl implements BricoMerlinService {
      */
     private void updatePrixFromCentralServer() {
         try {
+            System.out.println("Tentative de connexion au serveur central sur " + CENTRAL_HOST + ":" + CENTRAL_PORT);
             // Connexion au serveur central
             Registry registry = LocateRegistry.getRegistry(CENTRAL_HOST, CENTRAL_PORT);
             PrixService prixService = (PrixService) registry.lookup(CENTRAL_SERVICE);
+            System.out.println("Connexion au serveur central établie");
 
             // Récupération des prix
+            System.out.println("Récupération des prix depuis le serveur central...");
             Map<String, Double> prixArticles = prixService.getPrixArticles();
+            System.out.println("Nombre d'articles reçus : " + prixArticles.size());
 
             // Mise à jour des prix dans la base de données
+            int updatedCount = 0;
+            int failedCount = 0;
             for (Map.Entry<String, Double> entry : prixArticles.entrySet()) {
                 Article article = articleDAO.getArticleByReference(entry.getKey());
                 if (article != null) {
+                    System.out.println("Mise à jour du prix de l'article " + entry.getKey() + 
+                                     " : " + article.getPrixUnitaire() + "€ -> " + entry.getValue() + "€");
                     article.setPrixUnitaire(entry.getValue());
-                    articleDAO.updatePrix(article);
+                    if (articleDAO.updatePrix(article)) {
+                        updatedCount++;
+                    } else {
+                        failedCount++;
+                        System.err.println("Échec de la mise à jour du prix pour l'article " + entry.getKey());
+                    }
+                } else {
+                    System.err.println("Article non trouvé dans la base de données : " + entry.getKey());
                 }
             }
 
-            System.out.println("Prix mis à jour depuis le serveur central");
+            System.out.println("Mise à jour des prix terminée : " + updatedCount + " articles mis à jour, " + 
+                             failedCount + " échecs");
         } catch (Exception e) {
             System.err.println("Erreur lors de la mise à jour des prix: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

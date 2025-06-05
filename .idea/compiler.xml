@@ -5,6 +5,7 @@
       <directory url="file://$PROJECT_DIR$/bricomerlin-client/src/main/resources/archetype-resources" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/bricomerlin-common/src/main/resources/archetype-resources" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/bricomerlin-server/src/main/resources/archetype-resources" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/bricomerlin-central/src/main/resources/archetype-resources" includeSubdirectories="true" />
     </excludeFromCompile>
     <annotationProcessing>
       <profile name="Maven default annotation processors profile" enabled="true">
@@ -13,6 +14,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="bricomerlin-server" />
         <module name="bricomerlin-client" />
+        <module name="bricomerlin-central" />
         <module name="bricomerlin-common" />
       </profile>
     </annotationProcessing>
