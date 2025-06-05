@@ -90,4 +90,24 @@ public class ArticleDAO {
             return false;
         }
     }
+
+    /**
+     * Met à jour le prix d'un article
+     * @param article L'article à mettre à jour
+     * @return true si la mise à jour a réussi, false sinon
+     */
+    public boolean updatePrix(Article article) {
+        try {
+            String query = "UPDATE Article SET prix_unitaire = ? WHERE reference = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setDouble(1, article.getPrixUnitaire());
+            statement.setString(2, article.getReference());
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la mise à jour du prix: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

@@ -13,8 +13,11 @@ import fr.miage.bricomerlin.model.Facture;
 import fr.miage.bricomerlin.model.LigneFacture;
 
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -24,13 +27,46 @@ public class BricoMerlinServiceImpl implements BricoMerlinService {
     private ArticleDAO articleDAO;
     private FactureDAO factureDAO;
     private LigneFactureDAO ligneFactureDAO;
+    private static final String CENTRAL_HOST = "localhost";
+    private static final int CENTRAL_PORT = 1098;
+    private static final String CENTRAL_SERVICE = "PrixService";
 
     public BricoMerlinServiceImpl() {
         this.articleDAO = new ArticleDAO();
         this.factureDAO = new FactureDAO();
         this.ligneFactureDAO = new LigneFactureDAO();
 
+        // Mise à jour des prix au démarrage
+        updatePrixFromCentralServer();
+
         System.out.println("Service BricoMerlin initialisé");
+    }
+
+    /**
+     * Met à jour les prix depuis le serveur central
+     */
+    private void updatePrixFromCentralServer() {
+        try {
+            // Connexion au serveur central
+            Registry registry = LocateRegistry.getRegistry(CENTRAL_HOST, CENTRAL_PORT);
+            PrixService prixService = (PrixService) registry.lookup(CENTRAL_SERVICE);
+
+            // Récupération des prix
+            Map<String, Double> prixArticles = prixService.getPrixArticles();
+
+            // Mise à jour des prix dans la base de données
+            for (Map.Entry<String, Double> entry : prixArticles.entrySet()) {
+                Article article = articleDAO.getArticleByReference(entry.getKey());
+                if (article != null) {
+                    article.setPrixUnitaire(entry.getValue());
+                    articleDAO.updatePrix(article);
+                }
+            }
+
+            System.out.println("Prix mis à jour depuis le serveur central");
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la mise à jour des prix: " + e.getMessage());
+        }
     }
 
     @Override
