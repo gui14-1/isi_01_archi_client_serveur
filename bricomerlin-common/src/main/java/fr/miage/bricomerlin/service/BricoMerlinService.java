@@ -87,4 +87,12 @@ public interface BricoMerlinService extends Remote {
      */
     boolean ajouterProduit(String reference, int quantite)
             throws RemoteException, ArticleInexistantException;
+
+    /**
+     * Récupère la liste des factures non payées
+     *
+     * @return la liste des factures non payées
+     * @throws RemoteException en cas d'erreur RMI
+     */
+    List<FactureDTO> getFacturesNonPayees() throws RemoteException;
 }

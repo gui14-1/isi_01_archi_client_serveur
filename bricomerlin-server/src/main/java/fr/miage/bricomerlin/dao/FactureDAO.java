@@ -5,6 +5,7 @@ import fr.miage.bricomerlin.model.LigneFacture;
 import fr.miage.bricomerlin.unit.DatabaseConnection;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -120,5 +121,36 @@ public class FactureDAO {
             e.printStackTrace();
         }
         return total;
+    }
+
+    /**
+     * Récupère toutes les factures non payées
+     * @return Liste des factures non payées
+     */
+    public List<Facture> getFacturesNonPayees() {
+        List<Facture> factures = new ArrayList<>();
+        try {
+            String query = "SELECT * FROM Facture WHERE mode_paiement IS NULL ORDER BY date_facturation DESC";
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                Facture facture = new Facture();
+                facture.setIdFacture(resultSet.getInt("id_facture"));
+                facture.setDateFacturation(resultSet.getDate("date_facturation"));
+                facture.setTotal(resultSet.getDouble("total"));
+                facture.setModePaiement(resultSet.getString("mode_paiement"));
+
+                // Récupération des lignes de facture associées
+                List<LigneFacture> lignes = ligneFactureDAO.getLignesFactureByIdFacture(facture.getIdFacture());
+                facture.setLignes(lignes);
+
+                factures.add(facture);
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la récupération des factures non payées: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return factures;
     }
 }
