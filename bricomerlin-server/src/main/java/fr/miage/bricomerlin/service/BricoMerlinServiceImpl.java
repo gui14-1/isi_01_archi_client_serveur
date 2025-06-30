@@ -12,9 +12,12 @@ import fr.miage.bricomerlin.model.Article;
 import fr.miage.bricomerlin.model.Facture;
 import fr.miage.bricomerlin.model.LigneFacture;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -172,9 +175,61 @@ public class BricoMerlinServiceImpl implements BricoMerlinService {
         facture.setModePaiement(modePaiement);
         boolean success = factureDAO.updateFacture(facture);
 
+        if (success) {
+            // Génération du fichier .txt pour simuler l'impression du ticket
+            genererTicketCaisse(facture);
+        }
+
         System.out.println("Paiement de la facture " + idFacture + " par " + modePaiement);
 
         return success;
+    }
+
+    /**
+     * Génère un fichier .txt pour simuler l'impression d'un ticket de caisse
+     * @param facture La facture payée
+     */
+    private void genererTicketCaisse(Facture facture) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            SimpleDateFormat displayDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            String nomFichier = "ticket_facture_" + facture.getIdFacture() + "_" + dateFormat.format(new Date()) + ".txt";
+            
+            FileWriter writer = new FileWriter(nomFichier);
+            
+            writer.write("=======================================\n");
+            writer.write("           BRICO-MERLIN\n");
+            writer.write("         TICKET DE CAISSE\n");
+            writer.write("=======================================\n\n");
+            
+            writer.write("Facture n°: " + facture.getIdFacture() + "\n");
+            writer.write("Date: " + displayDateFormat.format(facture.getDateFacturation()) + "\n");
+            writer.write("Mode de paiement: " + facture.getModePaiement() + "\n\n");
+            
+            writer.write("---------------------------------------\n");
+            writer.write(String.format("%-15s %3s %8s %10s\n", "Article", "Qté", "P.Unit", "Sous-total"));
+            writer.write("---------------------------------------\n");
+            
+            for (LigneFacture ligne : facture.getLignes()) {
+                writer.write(String.format("%-15s %3d %8.2f€ %9.2f€\n",
+                    ligne.getReferenceArticle(),
+                    ligne.getQuantite(),
+                    ligne.getPrixUnitaire(),
+                    ligne.getSousTotal()));
+            }
+            
+            writer.write("---------------------------------------\n");
+            writer.write(String.format("TOTAL:                    %9.2f€\n", facture.getTotal()));
+            writer.write("=======================================\n");
+            writer.write("     Merci de votre visite !\n");
+            writer.write("=======================================\n");
+            
+            writer.close();
+            System.out.println("Ticket de caisse généré: " + nomFichier);
+            
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la génération du ticket: " + e.getMessage());
+        }
     }
 
     @Override
@@ -211,6 +266,15 @@ public class BricoMerlinServiceImpl implements BricoMerlinService {
         System.out.println("Ajout de " + quantite + " à l'article " + reference + " (nouveau stock: " + newStock + ")");
 
         return success;
+    }
+
+    @Override
+    public List<FactureDTO> getFacturesNonPayees() throws RemoteException {
+        System.out.println("Récupération des factures non payées");
+        List<Facture> factures = factureDAO.getFacturesNonPayees();
+        return factures.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     /**
