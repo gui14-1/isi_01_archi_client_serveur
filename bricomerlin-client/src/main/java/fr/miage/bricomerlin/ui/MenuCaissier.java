@@ -41,8 +41,9 @@ public class MenuCaissier {
             System.out.println("3. Ajouter un article à la facture");
             System.out.println("4. Consulter la facture en cours");
             System.out.println("5. Payer la facture");
-            System.out.println("6. Nouvelle facture");
-            System.out.println("7. Retour au menu principal");
+            System.out.println("6. Charger une facture non payée");
+            System.out.println("7. Nouvelle facture");
+            System.out.println("8. Retour au menu principal");
             System.out.print(ConsoleColors.CYAN + "\nVotre choix : " + ConsoleColors.RESET);
 
             int choix = lireChoixUtilisateur();
@@ -65,9 +66,12 @@ public class MenuCaissier {
                         payerFacture();
                         break;
                     case 6:
-                        nouvelleFacture();
+                        chargerFactureNonPayee();
                         break;
                     case 7:
+                        nouvelleFacture();
+                        break;
+                    case 8:
                         retourMenuPrincipal = true;
                         break;
                     default:
@@ -241,6 +245,54 @@ public class MenuCaissier {
     private void nouvelleFacture() {
         factureEnCours = 0;
         System.out.println(ConsoleColors.GREEN + "Nouvelle facture initialisée." + ConsoleColors.RESET);
+    }
+
+    /**
+     * Charge une facture non payée existante
+     */
+    private void chargerFactureNonPayee() throws RemoteException {
+        List<FactureDTO> facturesNonPayees = service.getFacturesNonPayees();
+        
+        if (facturesNonPayees.isEmpty()) {
+            System.out.println(ConsoleColors.YELLOW + "Aucune facture non payée trouvée." + ConsoleColors.RESET);
+            return;
+        }
+
+        System.out.println("\n" + ConsoleColors.GREEN_BOLD + "===== FACTURES NON PAYÉES =====" + ConsoleColors.RESET);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        
+        for (FactureDTO facture : facturesNonPayees) {
+            System.out.printf("%d. Facture #%d - %s - %.2f€ (%d articles)\n",
+                facturesNonPayees.indexOf(facture) + 1,
+                facture.getIdFacture(),
+                dateFormat.format(facture.getDateFacturation()),
+                facture.getTotal(),
+                facture.getLignes().size());
+        }
+
+        System.out.print("\nSélectionnez le numéro de la facture à charger (0 pour annuler) : ");
+        int choix;
+        try {
+            choix = Integer.parseInt(scanner.nextLine());
+            if (choix == 0) {
+                return;
+            }
+            if (choix < 1 || choix > facturesNonPayees.size()) {
+                System.out.println(ConsoleColors.RED + "Choix invalide." + ConsoleColors.RESET);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println(ConsoleColors.RED + "Choix invalide." + ConsoleColors.RESET);
+            return;
+        }
+
+        FactureDTO factureChoisie = facturesNonPayees.get(choix - 1);
+        factureEnCours = factureChoisie.getIdFacture();
+        
+        System.out.println(ConsoleColors.GREEN + "Facture #" + factureEnCours + " chargée avec succès !" + ConsoleColors.RESET);
+        
+        // Affichage des détails de la facture chargée
+        consulterFactureEnCours();
     }
 
     /**
